@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FareWise | Kenya Matatu Fare Checker</title>
+  <style>
+    :root {
+      --bg: #f6f1e8;
+      --surface: rgba(255, 250, 242, 0.88);
+      --surface-strong: #fffaf2;
+      --text: #1d2a1f;
+      --muted: #627066;
+      --line: rgba(36, 58, 43, 0.12);
+      --green: #1e6b43;
+      --green-deep: #11462b;
+      --orange: #d97706;
+      --gold: #f5c86b;
+      --danger: #b42318;
+      --shadow: 0 24px 60px rgba(30, 43, 33, 0.12);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(245, 200, 107, 0.6), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(30, 107, 67, 0.18), transparent 30%),
+        linear-gradient(135deg, #f5ead7 0%, #f7f4ee 48%, #e6f0e5 100%);
+      padding: 32px 18px 48px;
+    }
+
+    .shell {
+      max-width: 1140px;
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    .hero,
+    .panel {
+      background: var(--surface);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 28px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -60px auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(245, 200, 107, 0.65), rgba(245, 200, 107, 0));
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(30, 107, 67, 0.1);
+      color: var(--green-deep);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 0.74rem;
+    }
+
+    h1 {
+      margin: 18px 0 12px;
+      font-size: clamp(2.2rem, 5vw, 4.5rem);
+      line-height: 0.95;
+      max-width: 10ch;
+    }
+
+    .lead {
+      max-width: 58ch;
+      color: var(--muted);
+      font-size: 1.02rem;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .hero-grid,
+    .content-grid,
+    .stats {
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero-grid {
+      grid-template-columns: 1.4fr 1fr;
+      align-items: end;
+    }
+
+    .quick-facts {
+      display: grid;
+      gap: 12px;
+    }
+
+    .fact {
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(17, 70, 43, 0.08);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .fact strong,
+    .stat-value {
+      display: block;
+      font-size: 1.6rem;
+      margin-bottom: 6px;
+    }
+
+    .fact span,
+    .stat-label,
+    .small {
+      color: var(--muted);
+    }
+
+    .content-grid {
+      grid-template-columns: 1.15fr 0.85fr;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 24px;
+    }
+
+    .panel h2 {
+      margin: 0 0 8px;
+      font-size: 1.4rem;
+    }
+
+    .panel p {
+      margin: 0 0 20px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .stats {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-bottom: 20px;
+    }
+
+    .stat {
+      background: var(--surface-strong);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .route-list {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .route-card {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      background: var(--surface-strong);
+      border-radius: 18px;
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .route-card:hover,
+    .route-card:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(30, 107, 67, 0.35);
+      box-shadow: 0 18px 30px rgba(17, 70, 43, 0.08);
+      outline: none;
+    }
+
+    .route-card.active {
+      background: linear-gradient(135deg, #1d6c43 0%, #16472e 100%);
+      color: white;
+      border-color: transparent;
+    }
+
+    .route-card.active .small,
+    .route-card.active .route-meta {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .route-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+
+    .route-title {
+      font-size: 1.04rem;
+      font-weight: 700;
+    }
+
+    .route-meta {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .report-form {
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid rgba(36, 58, 43, 0.16);
+      border-radius: 14px;
+      padding: 14px 15px;
+      font: inherit;
+      color: var(--text);
+      background: white;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 96px;
+    }
+
+    .button {
+      border: none;
+      border-radius: 999px;
+      padding: 15px 18px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .button:hover,
+    .button:focus-visible {
+      transform: translateY(-1px);
+      outline: none;
+    }
+
+    .button.primary {
+      background: linear-gradient(135deg, var(--orange) 0%, #b45309 100%);
+      color: white;
+      box-shadow: 0 16px 28px rgba(180, 83, 9, 0.28);
+    }
+
+    .feedback,
+    .tips,
+    .reports {
+      border-radius: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: var(--surface-strong);
+    }
+
+    .feedback {
+      display: none;
+      margin-top: 4px;
+    }
+
+    .feedback.show {
+      display: block;
+    }
+
+    .feedback.success {
+      border-color: rgba(30, 107, 67, 0.24);
+      background: rgba(30, 107, 67, 0.08);
+      color: var(--green-deep);
+    }
+
+    .feedback.error {
+      border-color: rgba(180, 35, 24, 0.2);
+      background: rgba(180, 35, 24, 0.08);
+      color: var(--danger);
+    }
+
+    .feedback.warn {
+      border-color: rgba(217, 119, 6, 0.24);
+      background: rgba(217, 119, 6, 0.1);
+      color: #8a4b00;
+    }
+
+    .reports {
+      display: grid;
+      gap: 12px;
+      min-height: 220px;
+    }
+
+    .report-item {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+    }
+
+    .report-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .report-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 4px;
+      align-items: center;
+    }
+
+    .price {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .empty {
+      align-self: center;
+      color: var(--muted);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 900px) {
+      .hero-grid,
+      .content-grid,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 18px 12px 28px;
+      }
+
+      .hero,
+      .panel {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">FareWise Kenya</div>
+          <h1>Check matatu fare before you board.</h1>
+          <p class="lead">
+            FareWise helps passengers compare matatu prices on popular Kenyan routes, report what they paid, and spot fare spikes during rush hour, rain, or heavy traffic.
+          </p>
+        </div>
+        <div class="quick-facts">
+          <div class="fact">
+            <strong id="heroAverage">KES --</strong>
+            <span>Current average fare for the selected route</span>
+          </div>
+          <div class="fact">
+            <strong id="heroRange">KES -- to --</strong>
+            <span>Typical price range from recent passenger reports</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <section class="panel">
+        <h2>Live Route Prices</h2>
+        <p>Select a route to see current fare trends and recent passenger reports.</p>
+
+        <div class="route-list" id="routeList"></div>
+
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">Average</span>
+            <strong class="stat-value" id="averageValue">KES --</strong>
+            <span class="small">Best estimate right now</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Lowest</span>
+            <strong class="stat-value" id="lowestValue">KES --</strong>
+            <span class="small">Cheapest recent report</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Highest</span>
+            <strong class="stat-value" id="highestValue">KES --</strong>
+            <span class="small">Most expensive recent report</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Reports</span>
+            <strong class="stat-value" id="countValue">0</strong>
+            <span class="small">Community submissions</span>
+          </div>
+        </div>
+
+        <div class="tips" id="routeInfo">
+          Choose a route to view stage information and peak travel periods.
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Report What You Paid</h2>
+        <p>Passengers help make this website better. Share the fare you paid for the selected route.</p>
+
+        <form class="report-form" id="reportForm">
+          <div>
+            <label for="fareAmount">Fare amount in KES</label>
+            <input id="fareAmount" name="fareAmount" type="number" min="1" step="10" placeholder="Example: 150" required>
+          </div>
+
+          <div>
+            <label for="travelPeriod">Travel period</label>
+            <select id="travelPeriod" name="travelPeriod">
+              <option value="Peak">Peak hours</option>
+              <option value="Off-peak">Off-peak</option>
+              <option value="Night">Night</option>
+              <option value="Rainy">Rainy weather</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="fareNotes">Short note</label>
+            <textarea id="fareNotes" name="fareNotes" placeholder="Example: Heavy traffic near town or fare was normal today"></textarea>
+          </div>
+
+          <button class="button primary" type="submit">Submit fare report</button>
+          <div class="feedback" id="feedback"></div>
+        </form>
+
+        <h2 style="margin-top: 28px;">Recent Reports</h2>
+        <p>Latest passenger submissions for the selected route.</p>
+        <div class="reports" id="recentReports"></div>
+      </section>
+    </section>
+
+    <footer>
+      Crowd-sourced fares can change quickly. Always confirm with the conductor before paying.
+    </footer>
+  </main>
+
+  <script>
+    const currency = new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES',
+      maximumFractionDigits: 0
+    });
+
+    const state = {
+      routes: [],
+      currentRouteId: null
+    };
+
+    const routeList = document.getElementById('routeList');
+    const routeInfo = document.getElementById('routeInfo');
+    const feedback = document.getElementById('feedback');
+    const recentReports = document.getElementById('recentReports');
+    const reportForm = document.getElementById('reportForm');
+
+    function formatPrice(value) {
+      return value == null ? 'KES --' : currency.format(value);
+    }
+
+    function showFeedback(type, message) {
+      feedback.className = `feedback show ${type}`;
+      feedback.textContent = message;
+    }
+
+    function clearFeedback() {
+      feedback.className = 'feedback';
+      feedback.textContent = '';
+    }
+
+    function getCurrentRoute() {
+      return state.routes.find((route) => route.id === state.currentRouteId);
+    }
+
+    async function fetchJson(url, options) {
+      const response = await fetch(url, options);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Something went wrong.');
+      }
+
+      return data;
+    }
+
+    function renderRoutes() {
+      routeList.innerHTML = '';
+
+      state.routes.forEach((route) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `route-card${route.id === state.currentRouteId ? ' active' : ''}`;
+        button.innerHTML = `
+          <div class="route-top">
+            <span class="route-title">${route.name}</span>
+            <span class="small">${route.stage}</span>
+          </div>
+          <div class="route-meta">Peak: ${route.typicalPeak}</div>
+          <div class="route-meta">Off-peak: ${route.typicalOffPeak}</div>
+        `;
+
+        button.addEventListener('click', () => {
+          state.currentRouteId = route.id;
+          renderRoutes();
+          loadDashboard();
+        });
+
+        routeList.appendChild(button);
+      });
+    }
+
+    function renderSummary(summary) {
+      document.getElementById('averageValue').textContent = formatPrice(summary.average);
+      document.getElementById('lowestValue').textContent = formatPrice(summary.lowest);
+      document.getElementById('highestValue').textContent = formatPrice(summary.highest);
+      document.getElementById('countValue').textContent = String(summary.count || 0);
+      document.getElementById('heroAverage').textContent = formatPrice(summary.average);
+      document.getElementById('heroRange').textContent = `${formatPrice(summary.lowest)} to ${formatPrice(summary.highest)}`;
+
+      const route = getCurrentRoute();
+      if (!route) {
+        return;
+      }
+
+      const latestText = summary.latest
+        ? `Latest report: ${formatPrice(summary.latest.price)} during ${summary.latest.period}.`
+        : 'No reports yet for this route.';
+
+      routeInfo.textContent = `${route.name} uses ${route.stage}. Peak period is usually ${route.typicalPeak}, while cheaper fares are more common around ${route.typicalOffPeak}. ${latestText}`;
+    }
+
+    function renderReports(reports) {
+      if (!reports.length) {
+        recentReports.innerHTML = '<div class="empty">No reports yet. Be the first to share a fare.</div>';
+        return;
+      }
+
+      recentReports.innerHTML = reports.map((report) => {
+        const reportTime = new Date(report.time).toLocaleString('en-KE', {
+          dateStyle: 'medium',
+          timeStyle: 'short'
+        });
+
+        return `
+          <article class="report-item">
+            <div class="report-line">
+              <span class="price">${formatPrice(report.price)}</span>
+              <span class="small">${report.period}</span>
+            </div>
+            <div class="small">${reportTime}</div>
+            <div>${report.notes || 'Passenger did not leave a note.'}</div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    async function loadDashboard() {
+      if (!state.currentRouteId) {
+        return;
+      }
+
+      try {
+        const [summary, reports] = await Promise.all([
+          fetchJson(`/average?route=${encodeURIComponent(state.currentRouteId)}`),
+          fetchJson(`/fares?route=${encodeURIComponent(state.currentRouteId)}`)
+        ]);
+
+        renderSummary(summary);
+        renderReports(reports);
+      } catch (error) {
+        showFeedback('error', error.message);
+      }
+    }
+
+    async function loadRoutes() {
+      const routes = await fetchJson('/routes');
+      state.routes = routes;
+      state.currentRouteId = routes[0]?.id || null;
+      renderRoutes();
+      await loadDashboard();
+    }
+
+    reportForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearFeedback();
+
+      const amount = Number(document.getElementById('fareAmount').value);
+      const period = document.getElementById('travelPeriod').value;
+      const notes = document.getElementById('fareNotes').value.trim();
+
+      if (!state.currentRouteId) {
+        showFeedback('error', 'Please choose a route first.');
+        return;
+      }
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        showFeedback('error', 'Enter a valid fare amount.');
+        return;
+      }
+
+      try {
+        const result = await fetchJson('/fare', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            route: state.currentRouteId,
+            price: amount,
+            period,
+            notes
+          })
+        });
+
+        reportForm.reset();
+        showFeedback('success', result.message);
+
+        if (result.summary.average && amount > result.summary.average * 1.4) {
+          showFeedback(
+            'warn',
+            `Fare saved. You paid ${formatPrice(amount)}, which is above the current average of ${formatPrice(result.summary.average)}.`
+          );
+        }
+
+        await loadDashboard();
+      } catch (error) {
+        showFeedback('error', error.message);
+      }
+    });
+
+    loadRoutes().catch((error) => {
+      showFeedback('error', `Unable to load fare data. ${error.message}`);
+    });
+  </script>
+</body>
+</html>
